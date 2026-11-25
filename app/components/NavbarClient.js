@@ -48,11 +48,11 @@ return ( <header
         "
       >
         <img
-          src="/fusionLogo.png"
+          src="/logo.jpeg"
           alt="Office Logo"
           className="
-            w-32
-            sm:w-36
+            w-20
+            sm:w-20
             h-auto
           "
         />

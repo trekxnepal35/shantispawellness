@@ -1,353 +1,168 @@
+
 "use client";
 
 import Link from "next/link";
-
-import {
-  useEffect,
-  useState,
-} from "react";
-import { FaTripadvisor } from "react-icons/fa";
+import { useEffect, useState } from "react";
 import RichTextContent from "./components/RichTextContent";
 
-
-/*
-
-# HOMEPAGE
-
-*/
-
 export default function HomePage() {
-
-  const [
-    treks,
-    setTreks,
-  ] = useState([]);
-
-  const [
-    tours,
-    setTours,
-  ] = useState([]);
-
-  const [
-    upcomingDepartures,
-    setUpcomingDepartures,
-  ] = useState([]);
-
-  const [
-    regions,
-    setRegions,
-  ] = useState([]);
-
-  const [
-    faqPage,
-    setFaqPage,
-  ] = useState(null);
-
-  const [
-    loading,
-    setLoading,
-  ] = useState(true);
-
-  const [
-    error,
-    setError,
-  ] = useState("");
-
-
-
-  /*
-  
-  # FETCH HOMEPAGE DATA
-  
-  */
+  const [spaPages, setSpaPages] = useState([]);
+  const [wellnessPages, setWellnessPages] = useState([]);
+  const [faqPage, setFaqPage] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
+    let active = true;
 
     async function loadData() {
-
       try {
-
         setLoading(true);
-
         setError("");
 
-
-        /*
-        ======================================
-        FETCH TREKS
-        ======================================
-        */
-
-        const trekResponse =
-          await fetch(
-            "/api/treks?published=true&limit=100",
-            {
+        const [wellnessResponse, spaResponse, faqResponse] =
+          await Promise.all([
+            fetch("/api/pages?published=true&pageType=wellness&limit=100", {
               cache: "no-store",
-            }
-          );
-
-
-        const trekResult =
-          await trekResponse.json();
-
-
-        if (
-          trekResult.success
-        ) {
-
-          setTreks(
-            trekResult.data || []
-          );
-
-        }
-
-
-        /*
-        ======================================
-        FETCH TOURS
-        ======================================
-        */
-
-        const tourResponse =
-          await fetch(
-            "/api/tours?published=true&limit=100",
-            {
+            }),
+            fetch("/api/pages?published=true&pageType=spa&limit=100", {
               cache: "no-store",
-            }
-          );
-
-
-        const tourResult =
-          await tourResponse.json();
-
-
-        if (
-          tourResult.success
-        ) {
-
-          setTours(
-            tourResult.data || []
-          );
-
-        }
-
-        /*
-======================================
-FETCH UPCOMING DEPARTURES
-======================================
-*/
-
-        const departureResponse = await fetch(
-          "/api/upcoming-departures?limit=3",
-          {
-            cache: "no-store",
-          }
-        );
-
-        const departureResult = await departureResponse.json();
-
-        if (departureResult.success) {
-          setUpcomingDepartures(
-            departureResult.data || []
-          );
-        }
-        /*
-        ======================================
-        FETCH REGIONS
-        ======================================
-        */
-
-        const regionResponse =
-          await fetch(
-            "/api/regions?published=true",
-            {
+            }),
+            fetch("/api/faq", {
               cache: "no-store",
-            }
-          );
+            }),
+          ]);
 
+        const [wellnessResult, spaResult, faqResult] =
+          await Promise.all([
+            wellnessResponse.json(),
+            spaResponse.json(),
+            faqResponse.json(),
+          ]);
 
-        const regionResult =
-          await regionResponse.json();
+        if (!active) return;
 
+        if (wellnessResult.success) {
+          const pages = Array.isArray(wellnessResult.data)
+            ? wellnessResult.data
+            : [];
 
-        if (
-          regionResult.success
-        ) {
+          pages.sort((a, b) => {
+            const orderA = Number.isFinite(Number(a.order))
+              ? Number(a.order)
+              : Number.MAX_SAFE_INTEGER;
 
-          setRegions(
-            regionResult.data || []
-          );
+            const orderB = Number.isFinite(Number(b.order))
+              ? Number(b.order)
+              : Number.MAX_SAFE_INTEGER;
 
+            return orderA - orderB;
+          });
+
+          setWellnessPages(pages);
+        } else {
+          setError("Unable to load wellness experiences.");
         }
 
-        /*
-======================================
-FETCH FAQS
-======================================
-*/
+        if (spaResult.success) {
+          const pages = Array.isArray(spaResult.data)
+            ? spaResult.data
+            : [];
 
-        const faqResponse =
-          await fetch(
-            "/api/faq",
-            {
-              cache: "no-store",
-            }
-          );
+          pages.sort((a, b) => {
+            const orderA = Number.isFinite(Number(a.order))
+              ? Number(a.order)
+              : Number.MAX_SAFE_INTEGER;
 
+            const orderB = Number.isFinite(Number(b.order))
+              ? Number(b.order)
+              : Number.MAX_SAFE_INTEGER;
 
-        const faqResult =
-          await faqResponse.json();
+            return orderA - orderB;
+          });
 
-
-        if (
-          faqResult.success
-        ) {
-
-          setFaqPage(
-            faqResult.data || null
-          );
-
+          setSpaPages(pages);
         }
 
-      } catch (error) {
+        if (faqResult.success) {
+          setFaqPage(faqResult.data || null);
+        }
+      } catch (err) {
+        console.error("Homepage loading error:", err);
 
-        console.error(
-          "Homepage loading error:",
-          error
-        );
-
-
-        setError(
-          "Unable to load some website content."
-        );
-
+        if (active) {
+          setError("Unable to load some website content.");
+        }
       } finally {
-
-        setLoading(false);
-
+        if (active) setLoading(false);
       }
-
     }
-
 
     loadData();
 
-
+    return () => {
+      active = false;
+    };
   }, []);
-
-  /*
-  
-  # PRICE DISPLAY
-  
-  */
 
   function getPrice(item) {
     const price = item?.price;
 
     if (!price) return null;
 
-    // PAX-based pricing: display the minimum price per person
     if (price.pricingType === "pax_based") {
-      const tiers = Array.isArray(price.paxPrices)
+      const prices = Array.isArray(price.paxPrices)
         ? price.paxPrices
+          .map((tier) => Number(tier.pricePerPax))
+          .filter((amount) => Number.isFinite(amount) && amount > 0)
         : [];
 
-
-      const validPrices = tiers
-        .map((tier) => Number(tier.pricePerPax))
-        .filter((amount) => Number.isFinite(amount) && amount > 0);
-
-      if (validPrices.length === 0) return null;
+      if (!prices.length) return null;
 
       return {
-        amount: Math.min(...validPrices),
+        amount: Math.min(...prices),
         currency: price.currency || "USD",
-        label: " Start From",
       };
-
-
     }
 
-    // Fixed pricing
     const amount = Number(price.amount);
 
-    if (!Number.isFinite(amount) || amount <= 0) {
-      return null;
-    }
+    if (!Number.isFinite(amount) || amount <= 0) return null;
 
     return {
       amount,
       currency: price.currency || "USD",
-      label: "",
     };
   }
 
+  function getImage(item) {
+    const image = item?.cardImageUrl ||
+      item?.imageUrl ||
+      item?.image;
 
+    if (typeof image === "string") return image;
+    if (image && typeof image === "object") return image.url || "";
 
-
-  /*
-  
-  # LOADING
-  
-  */
+    return "";
+  }
 
   if (loading) {
-
-
     return (
-
-      <main className="min-h-screen bg-white">
-
-        <section className="relative min-h-[650px] overflow-hidden bg-slate-900">
-
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-800 to-slate-900" />
-
-
-          <div className="relative mx-auto flex min-h-[650px] max-w-7xl items-center px-6 py-20 lg:px-8">
-
-            <div className="w-full max-w-3xl animate-pulse">
-
-              <div className="mb-6 h-5 w-40 rounded bg-white/20" />
-
-              <div className="mb-4 h-14 max-w-2xl rounded bg-white/20" />
-
-              <div className="mb-8 h-14 max-w-xl rounded bg-white/20" />
-
-              <div className="h-14 w-48 rounded bg-white/20" />
-
-            </div>
-
-          </div>
-
-        </section>
-
-
+      <main className="min-h-screen bg-[#faf8f3]">
+        <section className="min-h-[650px] animate-pulse bg-[#203b32]" />
         <section className="mx-auto max-w-7xl px-6 py-20">
-
-          <div className="mb-12 h-10 w-72 animate-pulse rounded bg-slate-200" />
-
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-
-            {[1, 2, 3].map(
-              (item) => (
-
-                <div
-                  key={item}
-                  className="h-96 animate-pulse rounded-3xl bg-slate-100"
-                />
-
-              )
-            )}
-
+          <div className="h-10 w-72 rounded bg-stone-200" />
+          <div className="mt-10 grid gap-8 md:grid-cols-3">
+            {[1, 2, 3].map((item) => (
+              <div
+                key={item}
+                className="h-96 rounded-3xl bg-stone-200"
+              />
+            ))}
           </div>
-
         </section>
-
       </main>
-
     );
-
-
   }
 
   /*
@@ -359,17 +174,17 @@ FETCH FAQS
   const popularExperiences = [
 
 
-    ...treks.map(
+    ...spaPages.map(
       (item) => ({
         ...item,
-        experienceType: "trek",
+        experienceType: "spa",
       })
     ),
 
-    ...tours.map(
+    ...wellnessPages.map(
       (item) => ({
         ...item,
-        experienceType: "tour",
+        experienceType: "wellness",
       })
     ),
 
@@ -401,938 +216,564 @@ FETCH FAQS
     )
     .slice(0, 5);
 
-
   return (
+    <main className="min-h-screen bg-[#faf8f3] text-[#26382f]">
+
+      {/* HERO */}
+      <section className="relative flex min-h-[430px] items-center overflow-hidden bg-[#203b32]">
 
 
-    <main className="min-h-screen bg-white">
-
-
-      {/* =====================================
-      HERO
-  ===================================== */}
-
-      <section className="relative min-h-[350px] overflow-hidden bg-slate-950">
-
-
-        {/* Background */}
-
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(2,6,23,.35),rgba(2,6,23,.78)), url('/images/nepal-hero.jpg')",
-          }}
+        {/* Hero background image */}
+        <img
+          src="/images/shanti-spa-hero.jpg"
+          alt="Luxury Shanti spa and wellness sanctuary"
+          className="absolute inset-0 h-full w-full object-cover"
         />
 
+        <div className="absolute inset-0 bg-gradient-to-r from-[#142c24]/95 via-[#203b32]/80 to-[#203b32]/30" />
 
-        {/* Fallback gradient */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_35%,rgba(210,185,135,0.20),transparent_40%)]" />
+        <section className="mx-auto max-w-full px-6 py-20 lg:px-8">
+          <div className="relative mx-auto w-full max-w-full px-6 py-28 lg:px-8 grid gap-12 lg:grid-cols-2 lg:items-center">
+            {/* <div className="relative mx-auto w-full max-w-7xl px-6 py-28 lg:px-8"> */}
+            <div className="max-w-3xl text-white">
 
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-950/80 via-slate-900/30 to-slate-950/80" />
-
-
-        {/* Hero content */}
-
-        <div className="relative mx-auto flex min-h-[350px] max-w-7xl items-center px-6 py-24 lg:px-8">
-
-          <div className="max-w-4xl text-white">
-
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur-md">
-
-              <span className="h-2 w-2 rounded-full bg-emerald-400" />
-
-              Explore the Himalayas
-
-            </div>
-
-
-            <h1 className="text-3xl font-black tracking-tight sm:text-6xl lg:text-7xl">
-
-              Discover the Himalayas
-
-              <span className="block text-emerald-300">
-                Beyond the Ordinary
+              <span className="inline-flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.3em] text-[#d9c49b]">
+                <span className="h-px w-10 bg-[#d9c49b]" />
+                Shanti Spa & Wellness
               </span>
 
-            </h1>
+              <h1 className="mt-8 text-5xl font-light leading-tight tracking-tight sm:text-6xl lg:text-7xl">
+                Find Your
+                <span className="block font-semibold italic text-[#dfcba7]">
+                  Inner Balance
+                </span>
+              </h1>
 
+              <p className="mt-8 max-w-2xl text-lg leading-9 text-white/80 sm:text-xl">
+                Step away from the everyday and rediscover a sense of calm.
+                Experience thoughtful therapies, restorative rituals and
+                personalised wellness in a peaceful sanctuary.
+              </p>
 
-            <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-200 sm:text-xl">
+              <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+                <Link
+                  href="/spa"
+                  className="rounded-full bg-[#d8c29a] px-8 py-4 text-center text-sm font-bold uppercase tracking-wider text-[#26382f] transition hover:bg-white"
+                >
+                  Explore Spa
+                </Link>
 
-              Experience breathtaking Himalayan treks,
-              authentic mountain culture and unforgettable
-              adventures across Nepal.
+                <Link
+                  href="/wellness"
+                  className="rounded-full border border-white/50 px-8 py-4 text-center text-sm font-bold uppercase tracking-wider text-white transition hover:bg-white hover:text-[#26382f]"
+                >
+                  Explore Wellness
+                </Link>
+              </div>
 
-            </p>
-
-
-            <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-
-              <Link
-                href="/treks"
-                className="rounded-full bg-emerald-500 px-8 py-4 text-center font-bold text-white shadow-xl transition hover:-translate-y-1 hover:bg-emerald-400"
-              >
-                Explore Treks
-              </Link>
-
-
-              <Link
-                href="/tours"
-                className="rounded-full border border-white/40 bg-white/10 px-8 py-4 text-center font-bold text-white backdrop-blur-md transition hover:bg-white hover:text-slate-900"
-              >
-                Discover Tours
-              </Link>
-
+              <div className="mt-16 flex flex-wrap gap-8 border-t border-white/20 pt-8 text-sm text-white/70">
+                <span>✦ Personalised Wellness</span>
+                <span>✦ Restorative Therapies</span>
+                <span>✦ Moments of Stillness</span>
+              </div>
             </div>
 
+
+
+            {/* ==================================
+                Right SIDE
+              ================================== */}
+
+            {/* =====================================
+                POPULAR EXPERIENCES
+              ===================================== */}
+            <div className="relative">
+              {popularExperiences.length > 0 && (
+
+
+                <PopularExperiences
+                  experiences={
+                    popularExperiences
+                  }
+                  getPrice={
+                    getPrice
+                  }
+                />
+
+              )}
+            </div>
           </div>
-
-        </div>
-
-
-        {/* Bottom statistics */}
-
-        <div className="relative mx-auto -mt-20 max-w-full px-6 lg:px-8">
-
-          <div className="grid overflow-hidden rounded-3xl border border-white/10 bg-white/10 backdrop-blur-xl sm:grid-cols-3">
-            <div className="border-b border-white/10 p-6 text-center text-white sm:border-b-0 sm:border-r">
-
-              <div className="text-3xl font-black">
-                325+
-              </div>
-
-              <div className="mt-1 text-sm text-slate-300">
-                Happy Travellers
-              </div>
-
-            </div>
-
-
-
-            <div className="border-b border-white/10 p-6 text-center text-white sm:border-b-0 sm:border-r">
-
-              <div className="text-3xl font-black">
-                10+
-              </div>
-
-              <div className="mt-1 text-sm text-slate-300">
-                Years Experience
-              </div>
-
-            </div>
-
-
-
-            <div className="p-6 text-center text-white">
-
-              <div className="text-3xl font-black">
-                100%
-              </div>
-
-              <div className="mt-1 text-sm text-slate-300">
-                Nepal Adventure
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-
+        </section>
       </section>
 
+      {/* INTRODUCTION */}
+      <section
+        id="our-philosophy"
+        className="mx-auto max-w-7xl px-6 py-24 lg:px-8"
+      >
+        <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-[0.25em] text-[#a58a5e]">
+              The Shanti Philosophy
+            </p>
 
-      {/* =====================================
-      POPULAR EXPERIENCES
-  ===================================== */}
-
-      {popularExperiences.length > 0 && (
-
-        <PopularExperiences
-          experiences={
-            popularExperiences
-          }
-          getPrice={
-            getPrice
-          }
-        />
-
-      )}
-
-
-      {/* =====================================
-      ERROR
-  ===================================== */}
-
-      {error && (
-
-        <div className="mx-auto mt-8 max-w-7xl px-6 lg:px-8">
-
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-
-            {error}
-
+            <h2 className="mt-5 text-4xl font-light leading-tight text-[#26382f] sm:text-5xl">
+              A sanctuary for
+              <span className="block font-semibold italic">
+                body, mind and soul.
+              </span>
+            </h2>
           </div>
 
+          <div>
+            <p className="text-lg leading-9 text-stone-600">
+              At Shanti, wellness is more than a treatment. It is time
+              dedicated to yourself — a chance to slow down, reconnect
+              and restore your natural sense of balance.
+            </p>
+
+            <p className="mt-5 leading-8 text-stone-600">
+              Our experiences are designed around relaxation, mindful
+              care and personal wellbeing. Discover a peaceful space
+              where every visit becomes an opportunity to feel renewed.
+            </p>
+
+            <Link
+              href="#experiences"
+              className="mt-8 inline-flex items-center gap-3 border-b border-[#a58a5e] pb-2 text-sm font-bold uppercase tracking-wider text-[#786342] transition hover:text-[#26382f]"
+            >
+              Discover our experiences <span>→</span>
+            </Link>
+          </div>
         </div>
+      </section>
 
-      )}
+      {/* WELLNESS EXPERIENCES */}
+      <section
+        id="experiences"
+        className="bg-[#f0ede5] px-6 py-24 lg:px-8"
+      >
+        <div className="mx-auto max-w-7xl">
 
-      {/* =====================================
-      FEATURED TREKS
-  ===================================== */}
+          <SectionHeading
+            eyebrow="Explore Shanti"
+            title="Wellness Experiences"
+            description="Explore our collection of restorative treatments and wellness experiences, thoughtfully designed to help you relax, recharge and reconnect."
+          />
 
-      {treks.length > 0 && (
-
-        <section className="bg-slate-50 py-24">
-
-          <div className="mx-auto max-w-full px-6 lg:px-8">
-
-            <SectionHeading
-              eyebrow="Himalayan Adventures"
-              title="Featured Treks"
-              description="Explore some of Nepal's most unforgettable trekking experiences."
-              link="/treks"
-              linkText="View all treks"
-            />
-
-
-            <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-
-              {treks
-                .slice(0, 3)
-                .map(
-                  (trek) => (
-
-                    <ExperienceCard
-                      key={
-                        trek._id
-                      }
-                      item={
-                        trek
-                      }
-                      type="trek"
-                      getPrice={
-                        getPrice
-                      }
-                    />
-
-                  )
-                )}
-
+          {error && (
+            <div className="mt-8 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              {error}
             </div>
+          )}
 
-          </div>
-
-        </section>
-
-      )}
-
-      {/* =====================================
-    UPCOMING DEPARTURES
-===================================== */}
-
-      {upcomingDepartures.length > 0 && (
-        <section className="bg-white py-24">
-          <div className="mx-auto max-w-full px-6 lg:px-8">
-
-            <SectionHeading
-              eyebrow="Plan Your Journey"
-              title="Upcoming Departures"
-              description="Choose your preferred departure date and reserve your place on an upcoming Nepal adventure."
-              link="/upcoming-departures"
-              linkText="View all departures"
-            />
-
-            <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-
-              {upcomingDepartures.map((departure) => {
-                const experience = departure.experience;
-
-                if (!experience) return null;
-
-                const experienceType =
-                  experience.pageType?.slug || "experience";
-
-                const image =
-                  experience.cardImageUrl ||
-                  experience.imageUrl;
-
-                const bookingUrl =
-                  `/booking?experienceId=${encodeURIComponent(
-                    experience._id
-                  )}&experienceType=${encodeURIComponent(
-                    experienceType
-                  )}&departureId=${encodeURIComponent(
-                    departure._id
-                  )}`;
-
-                const detailHref =
-                  experienceType === "trek"
-                    ? `/treks/trek/${experience.slug}`
-                    : experienceType === "tour"
-                      ? `/tours/${experience.slug}`
-                      : experienceType === "wellness"
-                        ? `/wellness/${experience.slug}`
-                        : null;
-
-                const formatDepartureDate = (date) =>
-                  date
-                    ? new Date(date).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                      timeZone: "Asia/Kathmandu",
-                    })
-                    : "";
+          {wellnessPages.length > 0 ? (
+            <div className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {wellnessPages.slice(0, 3).map((item) => {
+                const price = getPrice(item);
+                const image = getImage(item);
+                const detailHref = `/wellness/${item.slug}`;
+                const bookingHref =
+                  `/booking?experienceId=${encodeURIComponent(item._id)}` +
+                  `&experienceType=wellness`;
 
                 return (
                   <article
-                    key={departure._id}
-                    className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-2xl"
+                    key={item._id}
+                    className="group overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-sm transition duration-500 hover:-translate-y-1 hover:shadow-xl"
                   >
-
-                    {/* EXPERIENCE IMAGE */}
-
-                    <div className="relative aspect-[4/3] overflow-hidden bg-slate-200">
-
-                      {image ? (
-                        <img
-                          src={image}
-                          alt={experience.title || "Upcoming departure"}
-                          className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center bg-gradient-to-br from-emerald-600 to-slate-900 text-6xl">
-                          🏔️
-                        </div>
-                      )}
-
-                      <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-wider text-slate-900 backdrop-blur">
-                        {experience.pageType?.name || experienceType}
-                      </span>
-
-                      <span className="absolute right-4 top-4 rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white shadow">
-                        {departure.availablePax} Seats Left
-                      </span>
-
-                    </div>
-
-                    {/* EXPERIENCE CONTENT */}
-
-                    <div className="p-6">
-
-                      <h3 className="line-clamp-2 text-2xl font-black text-slate-900">
-                        {experience.title}
-                      </h3>
-
-                      <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
-                        {experience.description ||
-                          "Discover an unforgettable Nepal adventure."}
-                      </p>
-
-                      {/* DEPARTURE DATES */}
-
-                      <div className="mt-5 space-y-2 border-t border-slate-100 pt-4 text-sm text-slate-700">
-
-                        <p>
-                          <strong>Start Date:</strong>{" "}
-                          {formatDepartureDate(departure.startDate)}
-                        </p>
-
-                        <p>
-                          <strong>End Date:</strong>{" "}
-                          {formatDepartureDate(departure.endDate)}
-                        </p>
-
-                        <p>
-                          <strong>Available Seats:</strong>{" "}
-                          <span className="font-bold text-emerald-700">
-                            {departure.availablePax}
-                          </span>
-                        </p>
-
-                      </div>
-
-                      {/* PRICE */}
-
-                      {departure.price && (
-                        <div className="mt-5">
-
-                          <span className="text-xs font-medium text-slate-500">
-                            {departure.price.label || "Price"}
-                          </span>
-
-                          <div className="text-2xl font-black text-slate-900">
-                            {departure.price.currency}{" "}
-                            {Number(departure.price.amount).toLocaleString("en-US")}
-
-                            <span className="ml-1 text-sm font-medium text-slate-400">
-                              / person
-                            </span>
+                    <Link href={detailHref} className="block">
+                      <div className="relative aspect-[4/3] overflow-hidden bg-[#d9d4c7]">
+                        {image ? (
+                          <img
+                            src={image}
+                            alt={item.title || "Shanti wellness experience"}
+                            className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center bg-gradient-to-br from-[#b9b19d] to-[#536b5b] text-6xl">
+                            ✦
                           </div>
-
-                        </div>
-                      )}
-
-                      {/* ACTIONS */}
-
-                      <div className="mt-6 flex flex-col gap-3">
-
-                        <Link
-                          href={bookingUrl}
-                          className="rounded-full bg-emerald-600 px-5 py-3 text-center text-sm font-bold text-white transition hover:bg-emerald-700"
-                        >
-                          Reserve This Departure
-                        </Link>
-
-                        {detailHref && (
-                          <Link
-                            href={detailHref}
-                            className="rounded-full border border-slate-300 px-5 py-3 text-center text-sm font-bold text-slate-700 transition hover:border-emerald-600 hover:text-emerald-600"
-                          >
-                            View Details
-                          </Link>
                         )}
 
+                        <span className="absolute bottom-4 left-4 rounded-full bg-white/90 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-[#354b3e]">
+                          Shanti Wellness
+                        </span>
+                      </div>
+                    </Link>
+
+                    <div className="p-7">
+                      <Link href={detailHref}>
+                        <h3 className="text-2xl font-semibold text-[#26382f] transition group-hover:text-[#92764c]">
+                          {item.title}
+                        </h3>
+                      </Link>
+
+                      <p className="mt-4 line-clamp-3 leading-7 text-stone-600">
+                        {item.description ||
+                          "Discover a restorative wellness experience at Shanti."}
+                      </p>
+
+                      <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-stone-100 pt-5">
+                        {price ? (
+                          <div>
+                            <span className="text-xs uppercase tracking-wider text-stone-500">
+                              From
+                            </span>
+                            <p className="text-xl font-bold text-[#26382f]">
+                              {price.currency}{" "}
+                              {price.amount.toLocaleString()}
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-stone-500">
+                            Contact us for pricing
+                          </span>
+                        )}
+
+                        <Link
+                          href={detailHref}
+                          className="text-sm font-bold text-[#92764c] transition hover:text-[#26382f]"
+                        >
+                          Discover More →
+                        </Link>
                       </div>
 
+                      <Link
+                        href={bookingHref}
+                        className="mt-6 block rounded-full bg-[#263f33] px-5 py-3 text-center text-sm font-bold uppercase tracking-wider text-white transition hover:bg-[#a58a5e]"
+                      >
+                        Book This Experience
+                      </Link>
                     </div>
-
                   </article>
                 );
               })}
-
             </div>
+          ) : (
+            <div className="mt-14 rounded-2xl border border-stone-200 bg-white p-10 text-center">
+              <p className="text-xl font-semibold text-[#26382f]">
+                Your wellness journey begins here.
+              </p>
+              <p className="mt-3 text-stone-600">
+                Our wellness experiences will appear here once published
+                in the administration panel.
+              </p>
+            </div>
+          )}
 
-          </div>
-        </section>
-      )}
-
-
-      {/* =====================================
-      INTRO
-  ===================================== */}
-
-      <section className="mx-auto max-w-full px-6 py-24 lg:px-8">
-
-        <div className="mx-auto  max-w-full text-center">
-
-          <span className="text-sm font-bold uppercase tracking-[0.25em] text-emerald-600">
-            Your Himalayan Journey
-          </span>
-
-
-          <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-900 sm:text-5xl">
-
-            Adventure starts here
-
-          </h2>
-
-
-          <p className="mt-6 text-lg leading-8 text-slate-600">
-
-            From iconic Himalayan trails to peaceful
-            cultural journeys, discover carefully designed
-            adventures that let you experience the real Nepal.
-
-          </p>
-
+          {wellnessPages.length > 6 && (
+            <div className="mt-12 text-center">
+              <Link
+                href="/wellness"
+                className="inline-flex rounded-full border border-[#263f33] px-8 py-4 text-sm font-bold uppercase tracking-wider text-[#263f33] transition hover:bg-[#263f33] hover:text-white"
+              >
+                View All Experiences
+              </Link>
+            </div>
+          )}
         </div>
-
-
-        {/* Feature cards */}
-
-        <div className="mt-16 grid  gap-6 md:grid-cols-3">
-
-          <FeatureCard
-            icon="🏔️"
-            title="Himalayan Treks"
-            text="Walk among the world's highest mountains and experience unforgettable Himalayan landscapes."
-          />
-
-
-          <FeatureCard
-            icon="🌿"
-            title="Authentic Experiences"
-            text="Meet local communities, discover mountain culture and travel beyond ordinary tourist routes."
-          />
-
-
-          <FeatureCard
-            icon="🧭"
-            title="Expertly Planned"
-            text="Flexible itineraries, experienced guides and carefully selected routes for a memorable journey."
-          />
-
-        </div>
-
       </section>
 
-      {/* =====================================
-      REGIONS
-  ===================================== */}
-
-      {regions.length > 0 && (
-
-        <section className="mx-auto max-w-full px-6 py-24 lg:px-8">
+      {/* SPA EXPERIENCES */}
+      <section
+        id="spa"
+        className="bg-[#faf8f3] px-6 py-24 lg:px-8"
+      >
+        <div className="mx-auto max-w-7xl">
 
           <SectionHeading
-            eyebrow="Explore Nepal"
-            title="Trekking Regions"
-            description="Choose a region and start planning your Himalayan adventure."
+            eyebrow="The Art of Relaxation"
+            title="Spa Experiences"
+            description="Discover our collection of spa treatments and rituals, created to bring relaxation, comfort and a renewed sense of wellbeing."
           />
 
+          {spaPages.length > 0 ? (
+            <div className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {spaPages.slice(0, 3).map((item) => {
+                const price = getPrice(item);
+                const image = getImage(item);
 
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                const detailHref = `/spa/${item.slug}`;
 
-            {regions
-              .slice(0, 3)
-              .map(
-                (region) => (
+                const bookingHref =
+                  `/booking?experienceId=${encodeURIComponent(item._id)}` +
+                  `&experienceType=spa`;
 
-                  <Link
-                    key={
-                      region._id
-                    }
-                    href={`/treks/${region.slug}`}
-                    className="group relative overflow-hidden rounded-3xl bg-slate-900 p-8 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
+                return (
+                  <article
+                    key={item._id}
+                    className="group overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm transition duration-500 hover:-translate-y-1 hover:shadow-xl"
                   >
+                    <Link href={detailHref} className="block">
+                      <div className="relative aspect-[4/3] overflow-hidden bg-[#d9d4c7]">
+                        {image ? (
+                          <img
+                            src={image}
+                            alt={item.title || "Shanti spa treatment"}
+                            className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center bg-gradient-to-br from-[#b9b19d] to-[#536b5b] text-6xl">
+                            ✦
+                          </div>
+                        )}
 
-                    {region.cardImageUrl && (
-
-                      <img
-                        src={
-                          region.cardImageUrl
-                        }
-                        alt={
-                          region.name
-                        }
-                        className="absolute inset-0 h-full w-full object-cover opacity-40 transition duration-500 group-hover:scale-105 group-hover:opacity-50"
-                      />
-
-                    )}
-
-
-                    <div className="relative">
-
-                      <div className="mb-12 text-4xl">
-                        🏔️
+                        <span className="absolute bottom-4 left-4 rounded-full bg-white/90 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-[#354b3e]">
+                          Shanti Spa
+                        </span>
                       </div>
+                    </Link>
 
+                    <div className="p-7">
+                      <Link href={detailHref}>
+                        <h3 className="text-2xl font-semibold text-[#26382f] transition group-hover:text-[#92764c]">
+                          {item.title}
+                        </h3>
+                      </Link>
 
-                      <h3 className="text-2xl font-black text-white">
-
-                        {region.name}
-
-                      </h3>
-
-
-                      <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-200">
-
-                        {region.description ||
-                          "Discover amazing Himalayan adventures in this region."}
-
+                      <p className="mt-4 line-clamp-3 leading-7 text-stone-600">
+                        {item.description ||
+                          "Discover a relaxing spa experience at Shanti."}
                       </p>
 
-
-                      <div className="mt-6 font-bold text-emerald-300">
-
-                        Explore Region
-
-                        <span className="ml-2 transition group-hover:ml-3">
-                          →
-                        </span>
-
-                      </div>
-
-                    </div>
-
-                  </Link>
-
-                )
-              )}
-
-          </div>
-
-        </section>
-
-      )}
-
-
-      {/* =====================================
-      TOURS
-  ===================================== */}
-
-      {tours.length > 0 && (
-
-        <section className="bg-slate-950 py-24">
-
-          <div className="mx-auto max-w-full px-6 lg:px-8">
-
-            <SectionHeading
-              eyebrow="Beyond Trekking"
-              title="Discover Nepal Tours"
-              description="Experience Nepal's culture, heritage, wildlife and natural beauty."
-              link="/tours"
-              linkText="View all tours"
-              dark
-            />
-
-
-            <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-
-              {tours
-                .slice(0, 3)
-                .map(
-                  (tour) => (
-
-                    <ExperienceCard
-                      key={
-                        tour._id
-                      }
-                      item={
-                        tour
-                      }
-                      type="tour"
-                      getPrice={
-                        getPrice
-                      }
-                      dark
-                    />
-
-                  )
-                )}
-
-            </div>
-
-          </div>
-
-        </section>
-
-      )}
-
-
-      {/* =====================================
-      WHY US
-  ===================================== */}
-
-      <section className="mx-auto max-w-full px-6 py-24 lg:px-8">
-
-        <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
-
-          <div>
-
-            <span className="text-sm font-bold uppercase tracking-[0.25em] text-emerald-600">
-              Travel With Confidence
-            </span>
-
-
-            <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-900 sm:text-5xl">
-
-              Nepal is more than a destination.
-
-            </h2>
-
-
-            <p className="mt-6 text-lg leading-8 text-slate-600">
-
-              It is a place of mountains, ancient cultures,
-              welcoming communities and extraordinary
-              landscapes.
-
-            </p>
-
-
-            <div className="mt-10 space-y-6">
-
-              <Reason
-                title="Local Expertise"
-                text="Travel with people who understand Nepal's mountains, culture and communities."
-              />
-
-
-              <Reason
-                title="Flexible Experiences"
-                text="Choose from carefully designed treks and tours or build an adventure around your needs."
-              />
-
-
-              <Reason
-                title="Responsible Travel"
-                text="Experience Nepal respectfully while supporting local communities and mountain environments."
-              />
-
-            </div>
-
-          </div>
-
-
-          <div className="relative">
-
-            <div className=" overflow-hidden rounded-[2rem] bg-gradient-to-br from-emerald-500 to-slate-900 p-1 shadow-2xl">
-
-
-
-              {/* ========================================
-                    FAQ SECTION
-                ======================================== */}
-
-              {faqPage?.faqs?.length > 0 && (
-
-                <section
-                  className="flex h-full   rounded-[1.7rem] bg-gradient-to-t from-slate-950 via-slate-900/30 to-transparent p-24"
-                // className="bg-gradient-to-br from-slate-50 via-white to-emerald-50 px-4 py-16 sm:px-6 lg:px-8"
-                >
-
-                  <div className="mx-auto max-w-5xl ">
-
-                    {/* FAQ HEADER */}
-
-                    <div className="mb-10 text-center">
-
-                      <h2 className="text-5xl  font-bold tracking-tight text-slate-900 sm:text-4xl">
-                        Frequently Asked Questions
-                      </h2>
-
-                      {/* <div className="mx-auto mt-4 h-1 w-32 rounded-full bg-emerald-600" /> */}
-
-                    </div>
-
-
-                    {/* FAQ ITEMS */}
-
-                    <div className="space-y-4">
-
-                      {faqPage.faqs
-                        .slice(0, 10)
-                        .map((faq, index) => (
-
-                          <details
-                            key={index}
-                            className="group rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
-                          >
-
-                            <summary className="whitespace-pre-line flex cursor-pointer list-none items-center justify-between gap-6 font-semibold text-gray-900">
-
-                              <span>
-                                {faq.question}
-                              </span>
-
-                              <span className="text-2xl text-emerald-600 transition-transform duration-300 group-open:rotate-45">
-                                +
-                              </span>
-
-                            </summary>
-
-
-                            {faq.answer && (
-
-                              <div className="mt-4 border-t border-gray-100 pt-4">
-
-                                {/* <p className="whitespace-pre-line leading-7 text-gray-600"> */}
-                                 
-                                 <RichTextContent content={faq.answer}/>
-                               
-
-                              </div>
-
-                            )}
-
-                          </details>
-
-                        ))}
-
-                    </div>
-
-
-                    {/* VIEW ALL */}
-
-                    {faqPage?.faqs?.length > 10 && (
-
-                      <div className="mt-8 text-center">
+                      <div className="mt-6 flex items-center justify-between gap-4 border-t border-stone-100 pt-5">
+                        {price ? (
+                          <div>
+                            <span className="text-xs uppercase tracking-wider text-stone-500">
+                              From
+                            </span>
+                            <p className="text-xl font-bold text-[#26382f]">
+                              {price.currency}{" "}
+                              {price.amount.toLocaleString()}
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-stone-500">
+                            Contact us for pricing
+                          </span>
+                        )}
 
                         <Link
-                          target="_blank"
-                          href="/faq"
-                          className="inline-flex items-center rounded-lg bg-emerald-600 px-6 py-3 font-semibold text-white transition hover:bg-emerald-700"
+                          href={detailHref}
+                          className="text-sm font-bold text-[#92764c] hover:text-[#26382f]"
                         >
-                          View More FAQs
+                          Discover More →
                         </Link>
-
                       </div>
 
-                    )}
-
-                  </div>
-
-                </section>
-
-              )}
-
-
-
+                      <Link
+                        href={bookingHref}
+                        className="mt-6 block rounded-full bg-[#263f33] px-5 py-3 text-center text-sm font-bold uppercase tracking-wider text-white transition hover:bg-[#a58a5e]"
+                      >
+                        Book This Treatment
+                      </Link>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
+          ) : (
+            <div className="mt-14 rounded-2xl border border-stone-200 bg-white p-10 text-center">
+              <p className="text-xl font-semibold text-[#26382f]">
+                Our spa collection is coming soon.
+              </p>
+              <p className="mt-3 text-stone-600">
+                Spa treatments will appear here once published in the administration panel.
+              </p>
+            </div>
+          )}
 
-          </div>
-
+          {spaPages.length > 6 && (
+            <div className="mt-12 text-center">
+              <Link
+                href="/spa"
+                className="inline-flex rounded-full border border-[#263f33] px-8 py-4 text-sm font-bold uppercase tracking-wider text-[#263f33] transition hover:bg-[#263f33] hover:text-white"
+              >
+                View All Spa Treatments
+              </Link>
+            </div>
+          )}
         </div>
-
       </section>
 
-      {/* =====================================
-      Associate
-  ===================================== */}
-
-      <section className="px-6 pb-24 lg:px-8">
-
-        <div className="mx-auto max-w-full overflow-hidden rounded-[2rem] px-8 py-16 text-center shadow-xl sm:px-16">
 
 
+      {/* WELLNESS PILLARS */}
+      <section className="mx-auto max-w-7xl px-6 py-24 lg:px-8">
+        <SectionHeading
+          eyebrow="The Shanti Experience"
+          title="A More Meaningful Kind of Wellness"
+          description="Every detail is an invitation to pause, breathe and give yourself the care you deserve."
+        />
 
-          <h3 className="mx-auto mt-24 text-4xl   font-black tracking-tight text-slate-900 ">
+        <div className="mt-14 grid gap-8 md:grid-cols-3">
+          <FeatureCard
+            icon="✧"
+            title="Restore"
+            text="Make space for rest and relaxation through thoughtfully designed wellness experiences."
+          />
 
-            We are Associated with
+          <FeatureCard
+            icon="❋"
+            title="Reconnect"
+            text="Step away from daily distractions and reconnect with yourself in a peaceful setting."
+          />
 
-          </h3>
+          <FeatureCard
+            icon="◈"
+            title="Renew"
+            text="Leave feeling refreshed, balanced and ready to embrace everyday life."
+          />
+        </div>
+      </section>
 
+      {/* PHILOSOPHY FEATURE */}
+      <section className="bg-[#263f33] px-6 py-24 text-white lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-2 lg:items-center">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-[0.25em] text-[#d8c29a]">
+              Time For Yourself
+            </p>
 
-          <div className="mt-10 flex flex-col justify-around gap-4 sm:flex-row">
-            <Link
-              href="/"
-              className="
-          flex
-          items-center
-          shrink-0          
-          lg:mr-10
-        "
-            >
-              <img
-                src="/nma.png"
-                alt="nma Logo"
-                className="
-          w-56 object-cover
-          "
-              />
-            </Link>
-            <Link
-              href="/"
-              className="
-          flex
-          items-center
-          shrink-0       
-          lg:mr-10
-        "
-            >
-              <img
-                src="/ntb.png"
-                alt="ntb Logo"
-                className="
-        w-16 object-cover
-          "
-              />
-            </Link>
-            <Link
-              href="/"
-              className="
-          flex
-          items-center
-          shrink-0       
-          lg:mr-10
-        "
-            >
-              <img
-                src="/taan.png"
-                alt="taan Logo"
-                className="
-           w-56 object-cover
-          "
-              />
-            </Link>
-
-
-            {/* TripAdvisor */}
-            <Link
-              href="https://www.tripadvisor.com/Attraction_Review-g293890-d26247521-Reviews-Fusion_Expeditions-Kathmandu_Kathmandu_Valley_Bagmati_Zone_Central_Region.html"
-              target="_blank"
-              rel="noopener noreferrer"
-              // className="text-emerald-500 text-2xl hover:scale-110 transition-transform"
-              className=" bg-white font-bold text-emerald-700 transition hover:-translate-y-1 hover:bg-slate-100"
-            >
-              <span className="text-5xl">
-                <FaTripadvisor />
-
+            <h2 className="mt-5 text-4xl font-light leading-tight sm:text-5xl">
+              Make room for
+              <span className="block font-semibold italic text-[#dfcba7]">
+                a little more peace.
               </span>
+            </h2>
+
+            <p className="mt-7 leading-8 text-white/75">
+              Your wellbeing deserves attention. Whether you are looking
+              for a moment of relaxation or a more complete wellness
+              experience, Shanti welcomes you to slow down and make
+              time for yourself.
+            </p>
+
+            <Link
+              href="#experiences"
+              className="mt-9 inline-flex rounded-full bg-[#d8c29a] px-8 py-4 text-sm font-bold uppercase tracking-wider text-[#26382f] transition hover:bg-white"
+            >
+              Find Your Experience
             </Link>
-
-
-
           </div>
 
-        </div>
+          <div className="rounded-3xl border border-white/15 bg-white/5 p-8 sm:p-12">
+            <p className="text-sm uppercase tracking-[0.25em] text-[#d8c29a]">
+              Our Promise
+            </p>
 
+            <p className="mt-6 text-2xl font-light leading-relaxed sm:text-3xl">
+              “A peaceful space, thoughtful care and time to reconnect
+              with what matters most.”
+            </p>
+
+            <div className="mt-8 h-px w-20 bg-[#d8c29a]" />
+
+            <p className="mt-5 text-sm font-semibold uppercase tracking-wider text-white/70">
+              Shanti Spa & Wellness
+            </p>
+          </div>
+        </div>
       </section>
 
+      {/* FAQ */}
+      {faqPage?.faqs?.length > 0 && (
+        <section className="mx-auto max-w-5xl px-6 py-24 lg:px-8">
+          <div className="text-center">
+            <p className="text-sm font-bold uppercase tracking-[0.25em] text-[#a58a5e]">
+              Need To Know
+            </p>
 
-      {/* =====================================
-      CTA
-  ===================================== */}
+            <h2 className="mt-4 text-4xl font-light text-[#26382f] sm:text-5xl">
+              Frequently Asked Questions
+            </h2>
 
+            <p className="mt-5 leading-8 text-stone-600">
+              Helpful information to make your Shanti experience
+              comfortable and enjoyable.
+            </p>
+          </div>
+
+          <div className="mt-12 space-y-4">
+            {faqPage.faqs.slice(0, 10).map((faq, index) => (
+              <details
+                key={index}
+                className="group rounded-xl border border-stone-200 bg-white p-6"
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-6 font-semibold text-[#26382f]">
+                  <span>{faq.question}</span>
+                  <span className="text-2xl text-[#a58a5e] transition group-open:rotate-45">
+                    +
+                  </span>
+                </summary>
+
+                {faq.answer && (
+                  <div className="mt-5 border-t border-stone-100 pt-5">
+                    <RichTextContent
+                      content={faq.answer}
+                      className="prose max-w-none prose-p:leading-7 prose-p:text-stone-600"
+                    />
+                  </div>
+                )}
+              </details>
+            ))}
+          </div>
+
+          {faqPage.faqs.length > 10 && (
+            <div className="mt-8 text-center">
+              <Link
+                href="/faq"
+                className="font-bold text-[#92764c] hover:text-[#26382f]"
+              >
+                View More Questions →
+              </Link>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* FINAL CTA */}
       <section className="px-6 pb-24 lg:px-8">
-
-        <div className="mx-auto max-w-full overflow-hidden rounded-[2rem] bg-emerald-600 px-8 py-16 text-center shadow-xl sm:px-16">
-
-          <span className="text-sm font-bold uppercase tracking-[0.25em] text-emerald-100">
-            Start Your Adventure
-          </span>
-
-
-          <h2 className="mx-auto mt-4  text-4xl font-black tracking-tight text-white sm:text-5xl">
-
-            Ready to explore Nepal?
-
-          </h2>
-
-
-          <p className="mx-auto mt-6  text-lg leading-8 text-emerald-50">
-
-            Find your perfect trek or tour and begin planning
-            an unforgettable journey through the Himalayas.
-
+        <div className="mx-auto max-w-7xl rounded-3xl bg-[#e9e3d6] px-8 py-20 text-center sm:px-16">
+          <p className="text-sm font-bold uppercase tracking-[0.25em] text-[#92764c]">
+            Your Time. Your Wellbeing.
           </p>
 
+          <h2 className="mx-auto mt-5 max-w-3xl text-4xl font-light leading-tight text-[#26382f] sm:text-5xl">
+            Begin Your Journey
+            <span className="block font-semibold italic">
+              Towards Balance.
+            </span>
+          </h2>
 
-          <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
+          <p className="mx-auto mt-6 max-w-2xl leading-8 text-stone-600">
+            Discover a calmer way to care for yourself.
+            Explore Shanti wellness experiences and find the
+            treatment that feels right for you.
+          </p>
 
-            <Link
-              href="/treks"
-              className="rounded-full bg-white px-8 py-4 font-bold text-emerald-700 transition hover:-translate-y-1 hover:bg-slate-100"
-            >
-              Explore Treks
-            </Link>
-
-
-            <Link
-              href="/tours"
-              className="rounded-full border border-white/40 px-8 py-4 font-bold text-white transition hover:bg-white/10"
-            >
-              Explore Tours
-            </Link>
-
-          </div>
-
+          <Link
+            href="#experiences"
+            className="mt-9 inline-flex rounded-full bg-[#263f33] px-9 py-4 text-sm font-bold uppercase tracking-wider text-white transition hover:bg-[#a58a5e]"
+          >
+            Explore Wellness Experiences
+          </Link>
         </div>
-
       </section>
-
     </main>
-
-
   );
-
 }
+
+
+/*
+ 
+# POPULAR EXPERIENCES
+ 
+*/
+
+
 
 /*
 
@@ -1466,21 +907,28 @@ function PopularExperiences({
     getPrice(current);
 
   const detailHref =
-    current.experienceType === "trek"
-      ? `/treks/trek/${current.slug}`
-      : `/tours/${current.slug}`;
+    current.experienceType === "spa"
+      ? `/spa/${current.slug}`
+      : `/wellness/${current.slug}`;
 
   return (
 
 
-    <section className="mx-auto max-w-full px-6 py-20 lg:px-8">
+    <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
 
-      <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+   
+
+
         {/* ==================================
-       LEFT SIDE
+        LEFT SIDE
     ================================== */}
 
-        <div className="relative">
+       
+
+        {/* ==================================
+        RIGHT SIDE
+    ================================== */}
+
 
           <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl">
 
@@ -1492,16 +940,16 @@ function PopularExperiences({
               className="group block"
             >
 
-              <div className="relative aspect-[10/5] overflow-hidden bg-slate-200">
+              <div className="relative aspect-[16/7] overflow-hidden bg-slate-200">
 
-                {current.cardImageUrl ? (
+                {current.imageUrl ? (
 
                   <img
                     key={
                       current._id
                     }
                     src={
-                      current.cardImageUrl
+                      current.imageUrl
                     }
                     alt={
                       current.title
@@ -1683,6 +1131,22 @@ function PopularExperiences({
                 </button>
 
               </div>
+              {/* Autoplay status */}
+
+              <div className="mt-8 flex items-center gap-3 text-sm text-slate-500">
+
+                <span
+                  className={`h-2.5 w-2.5 rounded-full ${isPlaying
+                    ? "animate-pulse bg-emerald-500"
+                    : "bg-slate-300"
+                    }`}
+                />
+
+                {isPlaying
+                  ? "Autoplay is on"
+                  : "Autoplay is paused"}
+
+              </div>
 
 
               {/* Dots */}
@@ -1719,14 +1183,18 @@ function PopularExperiences({
 
               </div>
 
+
             </div>
 
+
           </div>
+
 
 
           {/* Small numbered list */}
 
           <div className="mt-4 grid grid-cols-5 gap-2">
+
 
             {experiences.map(
               (
@@ -1759,76 +1227,12 @@ function PopularExperiences({
 
           </div>
 
-        </div>
-
-        {/* ==================================
-        RIGHT SIDE
-    ================================== */}
-
-        <div>
-
-          <span className="text-sm font-bold uppercase tracking-[0.25em] text-emerald-600">
-            Popular Adventures
-          </span>
-
-
-          <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-900 sm:text-5xl">
-
-            Discover our popular experiences
-
-          </h2>
-
-
-          <p className="text-justify mt-6 max-w-full text-lg leading-8 text-slate-600">
-
-            Explore some of our most popular Himalayan treks and Nepal tours, carefully selected from our published experiences. Discover unforgettable trekking adventures in the Himalayas, scenic mountain trails, authentic cultural experiences, and immersive Nepal tours designed for every kind of traveler. From iconic trekking routes to hidden valleys and local heritage, our carefully crafted journeys help you experience the very best of Nepal. Start planning your next Himalayan adventure and discover why Nepal remains one of the world’s most inspiring travel destinations.
-
-          </p>
-
-
-          <div className="mt-8 flex flex-wrap gap-3">
-
-            <Link
-              href="/treks"
-              className="rounded-full bg-slate-900 px-6 py-3 text-sm font-bold text-white transition hover:bg-emerald-600"
-            >
-              Explore Treks
-            </Link>
-
-
-            <Link
-              href="/tours"
-              className="rounded-full border border-slate-300 px-6 py-3 text-sm font-bold text-slate-700 transition hover:border-emerald-600 hover:text-emerald-600"
-            >
-              Explore Tours
-            </Link>
-
-          </div>
-
-
-          {/* Autoplay status */}
-
-          <div className="mt-8 flex items-center gap-3 text-sm text-slate-500">
-
-            <span
-              className={`h-2.5 w-2.5 rounded-full ${isPlaying
-                ? "animate-pulse bg-emerald-500"
-                : "bg-slate-300"
-                }`}
-            />
-
-            {isPlaying
-              ? "Autoplay is on"
-              : "Autoplay is paused"}
-
-          </div>
-
-        </div>
 
 
 
 
-      </div>
+
+  
 
     </section>
 
@@ -1837,354 +1241,39 @@ function PopularExperiences({
 
 }
 
-/*
 
-# FEATURE CARD
-
-*/
-
-function FeatureCard({
-  icon,
-  title,
-  text,
-}) {
-
+function SectionHeading({ eyebrow, title, description }) {
   return (
-
-
-    <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl">
-
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-3xl">
-
-        {icon}
-
-      </div>
-
-
-      <h3 className="mt-6 text-xl font-black text-slate-900">
-
-        {title}
-
-      </h3>
-
-
-      <p className="mt-3 leading-7 text-slate-600">
-
-        {text}
-
+    <div className="max-w-3xl">
+      <p className="text-sm font-bold uppercase tracking-[0.25em] text-[#a58a5e]">
+        {eyebrow}
       </p>
 
+      <h2 className="mt-4 text-4xl font-light leading-tight text-[#26382f] sm:text-5xl">
+        {title}
+      </h2>
+
+      <p className="mt-6 text-lg leading-8 text-stone-600">
+        {description}
+      </p>
     </div>
-
-
   );
-
 }
 
-/*
-
-# SECTION HEADING
-
-*/
-
-function SectionHeading({
-  eyebrow,
-  title,
-  description,
-  link,
-  linkText,
-  dark = false,
-}) {
-
+function FeatureCard({ icon, title, text }) {
   return (
-
-
-    <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
-
-      <div className="max-w-2xl">
-
-        <span
-          className={`text-sm font-bold uppercase tracking-[0.25em] ${dark
-            ? "text-emerald-300"
-            : "text-emerald-600"
-            }`}
-        >
-          {eyebrow}
-        </span>
-
-
-        <h2
-          className={`mt-3 text-4xl font-black tracking-tight sm:text-5xl ${dark
-            ? "text-white"
-            : "text-slate-900"
-            }`}
-        >
-          {title}
-        </h2>
-
-
-        <p
-          className={`mt-5 text-lg leading-8 ${dark
-            ? "text-slate-300"
-            : "text-slate-600"
-            }`}
-        >
-          {description}
-        </p>
-
+    <article className="rounded-2xl border border-stone-200 bg-white p-9 transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#eee8dc] text-3xl text-[#92764c]">
+        {icon}
       </div>
 
-
-      {link && (
-
-        <Link
-          href={link}
-          className={`font-bold transition ${dark
-            ? "text-emerald-300 hover:text-white"
-            : "text-emerald-700 hover:text-emerald-500"
-            }`}
-        >
-
-          {linkText}
-
-          <span className="ml-2">
-            →
-          </span>
-
-        </Link>
-
-      )}
-
-    </div>
-
-
-  );
-
-}
-
-/*
-
-# EXPERIENCE CARD
-
-*/
-
-function ExperienceCard({
-  item,
-  type,
-  getPrice,
-  dark = false,
-}) {
-
-  const price =
-    getPrice(item);
-
-  const detailHref =
-    item.pageType?.slug === "trek" ||
-      type === "trek"
-      ? `/treks/trek/${item.slug}`
-      : `/tours/${item.slug}`;
-
-  return (
-
-
-    <article
-      className={`group overflow-hidden rounded-3xl shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-2xl ${dark
-        ? "border border-white/10 bg-white/5"
-        : "border border-slate-200 bg-white"
-        }`}
-    >
-
-
-      {/* Image */}
-
-      <Link
-        href={detailHref}
-        className="block"
-      >
-
-        <div className="relative aspect-[4/3] overflow-hidden bg-slate-200">
-
-          {item.cardImageUrl ? (
-
-            <img
-              src={
-                item.cardImageUrl
-              }
-              alt={
-                item.title
-              }
-              className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-            />
-
-          ) : (
-
-            <div className="flex h-full items-center justify-center bg-gradient-to-br from-emerald-600 to-slate-900 text-6xl">
-              🏔️
-            </div>
-
-          )}
-
-
-          <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-wider text-slate-900 backdrop-blur">
-            {type}
-          </div>
-
-        </div>
-
-      </Link>
-
-
-      {/* Content */}
-
-      <div className="p-6">
-
-        <Link
-          href={detailHref}
-        >
-
-          <h3
-            className={`line-clamp-2 text-2xl font-black transition ${dark
-              ? "text-white group-hover:text-emerald-300"
-              : "text-slate-900 group-hover:text-emerald-700"
-              }`}
-          >
-            {item.title}
-          </h3>
-
-        </Link>
-
-
-        {item.region?.name && (
-
-          <p className="mt-2 text-sm font-semibold text-emerald-600">
-
-            📍 {item.region.name}
-
-          </p>
-
-        )}
-
-
-        <p
-          className={`mt-4 line-clamp-3 leading-7 ${dark
-            ? "text-slate-300"
-            : "text-slate-600"
-            }`}
-        >
-          {item.description ||
-            "Discover an unforgettable Nepal adventure."}
-        </p>
-
-
-        {/* Price */}
-
-        {price && (
-
-          <div className="mt-6">
-
-            <span
-              className={`text-xs ${dark
-                ? "text-slate-400"
-                : "text-slate-500"
-                }`}
-            >
-              {price.label ||
-                "Price"}
-            </span>
-
-
-            <div
-              className={`text-2xl font-black ${dark
-                ? "text-white"
-                : "text-slate-900"
-                }`}
-            >
-
-              {price.currency}{" "}
-
-              {price.amount.toLocaleString()}
-
-              <span className="ml-1 text-sm font-medium text-slate-400">
-                / person
-              </span>
-
-            </div>
-
-          </div>
-
-        )}
-
-
-        {/* Buttons */}
-
-        <div className="mt-6 flex gap-3">
-
-          <Link
-            href={detailHref}
-            className={`flex-1 rounded-full px-5 py-3 text-center text-sm font-bold transition ${dark
-              ? "bg-white text-slate-900 hover:bg-emerald-300"
-              : "bg-slate-900 text-white hover:bg-emerald-600"
-              }`}
-          >
-            View Details
-          </Link>
-
-
-          <Link
-            href={`/booking?experienceId=${item._id}&experienceType=${type}`}
-            className="rounded-full border border-emerald-600 px-5 py-3 text-sm font-bold text-emerald-700 transition hover:bg-emerald-600 hover:text-white"
-          >
-            Book
-          </Link>
-
-        </div>
-
-      </div>
-
+      <h3 className="mt-7 text-2xl font-semibold text-[#26382f]">
+        {title}
+      </h3>
+
+      <p className="mt-4 leading-8 text-stone-600">
+        {text}
+      </p>
     </article>
-
-
   );
-
-}
-
-/*
-
-# REASON
-
-*/
-
-function Reason({
-  title,
-  text,
-}) {
-
-  return (
-
-
-    <div className="flex gap-4">
-
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 font-bold text-emerald-700">
-        ✓
-      </div>
-
-
-      <div>
-
-        <h3 className="font-black text-slate-900">
-          {title}
-        </h3>
-
-
-        <p className="mt-1 leading-7 text-slate-600">
-          {text}
-        </p>
-
-      </div>
-
-    </div>
-
-
-  );
-
 }

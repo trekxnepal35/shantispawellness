@@ -24,9 +24,9 @@ export const metadata = {
 
   title: {
     default:
-      "FUSION EXPEDITIONS | Himalayan Treks & Tours",
+      "Shanti Spa & Wellness |  Spa & Wellness",
     template:
-      "%s | FUSION EXPEDITIONS",
+      "%s | Shanti Spa & Wellness",
   },
 
 
@@ -35,32 +35,25 @@ export const metadata = {
 
 
   keywords: [
-    "Nepal trekking",
-    "Nepal tours",
-    "Everest Base Camp Trek",
-    "Annapurna Trek",
-    "Langtang Trek",
-    "Manaslu Trek",
-    "Kangchenjunga Trek",
-    "Himalayan trekking",
-    "Nepal travel",
+    " Spa & Wellness",
+    "Spa & Wellness",    
     "Nepal adventure",
   ],
 
 
   authors: [
     {
-      name: "FUSION EXPEDITIONS",
+      name: "Shanti Spa & Wellness",
     },
   ],
 
 
   creator:
-    "FUSION EXPEDITIONS",
+    "Shanti Spa & Wellness",
 
 
   publisher:
-    "FUSION EXPEDITIONS",
+    "Shanti Spa & Wellness",
 
 
   metadataBase:
@@ -82,13 +75,13 @@ export const metadata = {
     locale: "en_US",
 
     siteName:
-      " Fusion Expeditions ",
+      " Shanti Spa & Wellness ",
 
     title:
-      " Fusion Expeditions | Himalayan Treks & Tours",
+      " Shanti Spa & Wellness |  Spa & Wellness",
 
     description:
-      "Explore Nepal's Himalayas through unforgettable treks, tours and authentic travel experiences.",
+      "Explore Nepal's  Spa & Wellness",
 
     url: "/",
   },
@@ -100,10 +93,10 @@ export const metadata = {
       "summary_large_image",
 
     title:
-      "Fusion Expeditions | Himalayan Treks & Tours",
+      "Shanti Spa & Wellness |  Spa & Wellness",
 
     description:
-      "Discover unforgettable adventures across Nepal's Himalayas.",
+      "Discover unforgettable  Spa & Wellness",
   },
 
 
@@ -192,13 +185,11 @@ export default async function RootLayout({
 
                       <div className="text-xl font-black">
 
-                        Fusion Expeditions
+                        Shanti Spa & Wellness
 
                       </div>
 
-                      <div className="text-xs text-slate-400">
-                        Himalayan Adventures
-                      </div>
+                     
 
                     </div>
 
@@ -208,9 +199,7 @@ export default async function RootLayout({
 
                 <p className="mt-6 max-w-md leading-7 text-slate-400">
 
-                  Discover the mountains, culture and
-                  extraordinary landscapes of Nepal through
-                  unforgettable trekking and travel experiences.
+                Rejuvenating spa treatments, and wellness services to refresh your body and mind. Experience relaxation, comfort, and holistic care.
 
                 </p>
 
@@ -232,17 +221,17 @@ export default async function RootLayout({
                 <ul className="mt-5 space-y-3 text-sm text-slate-400">
 
                   <li>
-                    <Link href="/treks" className="transition hover:text-white">
+                    <Link href="/spa" className="transition hover:text-white">
 
-                      Treks
+                      Spa
                     </Link>
 
                   </li>
 
 
                   <li>
-                    <Link href="/tours" className="transition hover:text-white">
-                      Tours
+                    <Link href="/wellness" className="transition hover:text-white">
+                      Wellness
                     </Link>
                   </li>
 
@@ -310,12 +299,12 @@ export default async function RootLayout({
 
 
                   <li>
-                    ✉️ fusionexpeditions@gmail.com
+                    ✉️ shantispawellness@gmail.com
                   </li>
 
 
                   <li>
-                    📞 +977 9851432432
+                    📞 +977 9851-------
                   </li>
 
                 </ul>
@@ -324,7 +313,7 @@ export default async function RootLayout({
 
                   {/* Facebook */}
                   <Link
-                    href="https://www.facebook.com/FusionExpeditions"
+                    href="https://www.facebook.com/p/Shanti-Spa-Wellness-61593022503201"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs font-bold uppercase transition hover:bg-emerald-500"
@@ -337,7 +326,7 @@ export default async function RootLayout({
 
                   {/* Instagram */}
                   <Link
-                    href="https://www.instagram.com/fusionexpeditions"
+                    href="https://www.instagram.com/shantispa_and_wellness"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-pink-600 text-2xl hover:scale-110 transition-transform"
@@ -407,7 +396,7 @@ export default async function RootLayout({
             <div className="mt-14 flex flex-col gap-4 border-t border-white/10 pt-8 text-sm text-slate-500 md:flex-row md:items-center md:justify-between">
 
               <p className="transition hover:text-white" >
-                © {new Date().getFullYear()} Fusion Expeditions Pvt Ltd. Nepal,
+                © {new Date().getFullYear()} Shanti Spa & Wellness Pvt Ltd. Nepal,
                 All rights reserved.
               </p>
 
@@ -454,10 +443,10 @@ export default async function RootLayout({
                 "TravelAgency",
 
               name:
-                "Fusion Expeditions",
+                "Shanti Spa & Wellness",
 
               description:
-                "Fusion Expeditions trekking and tour company offering Himalayan adventures and travel experiences.",
+                "Shanti Spa & Wellness trekking and tour company offering Himalayan adventures and travel experiences.",
 
               url:
                 process.env.NEXT_PUBLIC_SITE_URL ||

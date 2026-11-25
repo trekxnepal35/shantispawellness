@@ -400,7 +400,7 @@ export default function ImageGallery({
         ${
           isExpanded
             ? "h-[750px]"
-            : "h-[410px]"
+            : "h-[510px]"
         }
       `}
     >

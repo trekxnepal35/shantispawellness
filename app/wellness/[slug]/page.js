@@ -131,28 +131,6 @@ export default async function WellnessDetailPage({ params }) {
   const wellnessImageUrl = await resolvePageImage(page);
 
   // Resolve gallery images from S3, Cloudinary, or existing URLs.
-  // const galleryImages = Array.isArray(page.images)
-  //   ? await Promise.all(
-  //     page.images.map(async (image) => {
-  //       const imageUrl = await resolveImage(
-  //         typeof image === "string"
-  //           ? { url: image }
-  //           : image
-  //       );
-
-  //       return {
-  //         ...(typeof image === "object" && image !== null
-  //           ? image
-  //           : {}),
-  //         url: imageUrl,
-  //         alt:
-  //           (typeof image === "object" && image?.alt) ||
-  //           page.title ||
-  //           "Wellness image",
-  //       };
-  //     })
-  //   )
-  //   : [];
 
 
     const galleryImages =
