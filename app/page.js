@@ -9,6 +9,7 @@ export default function HomePage() {
   const [spaPages, setSpaPages] = useState([]);
   const [wellnessPages, setWellnessPages] = useState([]);
   const [faqPage, setFaqPage] = useState(null);
+  const [feedback, setFeedback] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -20,7 +21,7 @@ export default function HomePage() {
         setLoading(true);
         setError("");
 
-        const [wellnessResponse, spaResponse, faqResponse] =
+        const [wellnessResponse, spaResponse, faqResponse, feedbackResponse,] =
           await Promise.all([
             fetch("/api/pages?published=true&pageType=wellness&limit=100", {
               cache: "no-store",
@@ -31,14 +32,20 @@ export default function HomePage() {
             fetch("/api/faq", {
               cache: "no-store",
             }),
+            fetch("/api/feedback?page=1&limit=100", {
+              cache: "no-store",
+            }),
           ]);
 
-        const [wellnessResult, spaResult, faqResult] =
+        const [wellnessResult, spaResult, faqResult, feedbackResult,] =
           await Promise.all([
             wellnessResponse.json(),
             spaResponse.json(),
             faqResponse.json(),
+            feedbackResponse.json(),
           ]);
+
+
 
         if (!active) return;
 
@@ -86,6 +93,22 @@ export default function HomePage() {
 
         if (faqResult.success) {
           setFaqPage(faqResult.data || null);
+        }
+        if (feedbackResult.success) {
+          const reviews = Array.isArray(feedbackResult.data)
+            ? feedbackResult.data
+            : [];
+
+          const spaAndWellnessReviews = reviews.filter((review) => {
+            const pageTypeSlug = review.page?.pageType?.slug;
+
+            return (
+              pageTypeSlug === "spa" ||
+              pageTypeSlug === "wellness"
+            );
+          });
+
+          setFeedback(spaAndWellnessReviews.slice(0, 6));
         }
       } catch (err) {
         console.error("Homepage loading error:", err);
@@ -239,7 +262,7 @@ export default function HomePage() {
             <div className="max-w-3xl text-white">
 
               <span className="inline-flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.3em] text-[#d9c49b]">
-                <span className="h-px w-10 bg-[#d9c49b] "  />
+                <span className="h-px w-10 bg-[#d9c49b] " />
                 Shanti Spa & Wellness
               </span>
 
@@ -629,6 +652,71 @@ export default function HomePage() {
         </div>
       </section>
 
+
+{/* GUEST REVIEWS */}
+{feedback.length > 0 && (
+  <section className="bg-[#f0ede5] px-6 py-24 lg:px-8">
+    <div className="mx-auto max-w-7xl">
+      <div className="text-center">
+        <p className="text-sm font-bold uppercase tracking-[0.25em] text-[#a58a5e]">
+          Guest Experiences
+        </p>
+
+        <h2 className="mt-4 text-4xl font-light text-[#26382f] sm:text-5xl">
+          What Our Guests Say
+        </h2>
+
+        <p className="mx-auto mt-5 max-w-2xl leading-8 text-stone-600">
+          Discover what our guests say about their spa treatments
+          and wellness experiences at Shanti.
+        </p>
+      </div>
+
+      <div className="mt-14 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        {feedback.map((review) => (
+          <article
+            key={review._id}
+            className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+          >
+            <div
+              className="flex gap-1 text-xl text-[#b08d52]"
+              aria-label={`${review.rating} out of 5 stars`}
+            >
+              {Array.from(
+                { length: 5 },
+                (_, index) => (
+                  <span key={index}>
+                    {index < review.rating ? "★" : "☆"}
+                  </span>
+                )
+              )}
+            </div>
+
+            <p className="mt-6 leading-8 text-stone-600">
+              “{review.comment}”
+            </p>
+
+            <div className="mt-8 border-t border-stone-100 pt-5">
+              <h3 className="font-semibold text-[#26382f]">
+                {review.name}
+              </h3>
+
+              <p className="mt-1 text-sm text-[#92764c]">
+                {review.page?.title || "Shanti Experience"}
+              </p>
+
+              <p className="mt-1 text-xs uppercase tracking-wider text-stone-400">
+                {review.page?.pageType?.name || "Guest Experience"}
+              </p>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+)}
+
+
       {/* PHILOSOPHY FEATURE */}
       <section className="bg-[#263f33] px-6 py-24 text-white lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-2 lg:items-center">
@@ -916,285 +1004,242 @@ function PopularExperiences({
 
     <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
 
-   
 
 
-        {/* ==================================
+
+      {/* ==================================
         LEFT SIDE
     ================================== */}
 
-       
 
-        {/* ==================================
+
+      {/* ==================================
         RIGHT SIDE
     ================================== */}
 
 
-          <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl">
+      <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl">
 
 
-            {/* Main image */}
+        {/* Main image */}
 
-            <Link
-              href={detailHref}
-              className="group block"
-            >
+        <Link
+          href={detailHref}
+          className="group block"
+        >
 
-              <div className="relative aspect-[16/7] overflow-hidden bg-slate-200">
+          <div className="relative aspect-[16/7] overflow-hidden bg-slate-200">
 
-                {current.imageUrl ? (
+            {current.imageUrl ? (
 
-                  <img
-                    key={
-                      current._id
-                    }
-                    src={
-                      current.imageUrl
-                    }
-                    alt={
-                      current.title
-                    }
-                    className="h-full w-full object-cover transition duration-1000 group-hover:scale-105"
-                  />
+              <img
+                key={
+                  current._id
+                }
+                src={
+                  current.imageUrl
+                }
+                alt={
+                  current.title
+                }
+                className="h-full w-full object-cover transition duration-1000 group-hover:scale-105"
+              />
 
-                ) : (
+            ) : (
 
-                  <div className="flex h-full items-center justify-center bg-gradient-to-br from-emerald-600 to-slate-900 text-7xl">
+              <div className="flex h-full items-center justify-center bg-gradient-to-br from-emerald-600 to-slate-900 text-7xl">
 
-                    🏔️
-
-                  </div>
-
-                )}
-
-
-                {/* Overlay */}
-
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
-
-
-                {/* Type */}
-
-                <div className="absolute left-5 top-5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-900 backdrop-blur">
-
-                  {current.experienceType}
-
-                </div>
-
-
-                {/* Image counter */}
-
-                <div className="absolute right-5 top-5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-bold text-white backdrop-blur">
-
-                  {currentIndex + 1} / {experiences.length}
-
-                </div>
-
-
-                {/* Image title */}
-
-                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-
-                  <h3 className="text-2xl font-black sm:text-3xl">
-
-                    {current.title}
-
-                  </h3>
-
-
-                  {current.region?.name && (
-
-                    <p className="mt-2 text-sm font-semibold text-emerald-300">
-
-                      📍 {current.region.name}
-
-                    </p>
-
-                  )}
-
-                </div>
+                🏔️
 
               </div>
 
-            </Link>
+            )}
 
 
-            {/* Content */}
+            {/* Overlay */}
 
-            <div className="p-6">
-
-
-              <p className="line-clamp-2 leading-7 text-slate-600">
-
-                {current.description ||
-                  "Discover an unforgettable Nepal adventure."}
-
-              </p>
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
 
 
-              <div className="mt-5 flex flex-wrap items-end justify-between gap-4">
+            {/* Type */}
 
+            <div className="absolute left-5 top-5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-900 backdrop-blur">
 
-                {/* Price */}
-
-                {price ? (
-
-                  <div>
-
-                    <span className="text-xs text-slate-500">
-
-                      {price.label ||
-                        "Price"}
-
-                    </span>
-
-
-                    <div className="text-2xl font-black text-slate-900">
-
-                      {price.currency}{" "}
-
-                      {price.amount.toLocaleString()}
-
-                      <span className="ml-1 text-sm font-medium text-slate-400">
-
-                        / person
-
-                      </span>
-
-                    </div>
-
-                  </div>
-
-                ) : (
-
-                  <div className="text-sm font-semibold text-slate-500">
-
-                    Contact us for pricing
-
-                  </div>
-
-                )}
-
-
-                <Link
-                  href={detailHref}
-                  className="rounded-full bg-slate-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-600"
-                >
-                  View Details
-                </Link>
-
-              </div>
-
-
-              {/* Controls */}
-
-              <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-5">
-
-
-                <button
-                  type="button"
-                  onClick={
-                    previousExperience
-                  }
-                  aria-label="Previous popular experience"
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-lg font-bold text-slate-700 transition hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-600"
-                >
-                  ←
-                </button>
-
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setIsPlaying(
-                      (playing) =>
-                        !playing
-                    )
-                  }
-                  className="rounded-full border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-600"
-                >
-                  {isPlaying
-                    ? "❚❚ Pause"
-                    : "▶ Play"}
-                </button>
-
-
-                <button
-                  type="button"
-                  onClick={
-                    nextExperience
-                  }
-                  aria-label="Next popular experience"
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-lg font-bold text-slate-700 transition hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-600"
-                >
-                  →
-                </button>
-
-              </div>
-              {/* Autoplay status */}
-
-              <div className="mt-8 flex items-center gap-3 text-sm text-slate-500">
-
-                <span
-                  className={`h-2.5 w-2.5 rounded-full ${isPlaying
-                    ? "animate-pulse bg-emerald-500"
-                    : "bg-slate-300"
-                    }`}
-                />
-
-                {isPlaying
-                  ? "Autoplay is on"
-                  : "Autoplay is paused"}
-
-              </div>
-
-
-              {/* Dots */}
-
-              <div className="mt-5 flex justify-center gap-2">
-
-                {experiences.map(
-                  (
-                    experience,
-                    index
-                  ) => (
-
-                    <button
-                      key={
-                        experience._id
-                      }
-                      type="button"
-                      onClick={() => {
-
-                        setCurrentIndex(
-                          index
-                        );
-
-                      }}
-                      aria-label={`Show popular experience ${index + 1}`}
-                      className={`h-2.5 rounded-full transition-all ${index === currentIndex
-                        ? "w-8 bg-emerald-500"
-                        : "w-2.5 bg-slate-300 hover:bg-slate-400"
-                        }`}
-                    />
-
-                  )
-                )}
-
-              </div>
-
+              {current.experienceType}
 
             </div>
 
 
+            {/* Image counter */}
+
+            <div className="absolute right-5 top-5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-bold text-white backdrop-blur">
+
+              {currentIndex + 1} / {experiences.length}
+
+            </div>
+
+
+            {/* Image title */}
+
+            <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+
+              <h3 className="text-2xl font-black sm:text-3xl">
+
+                {current.title}
+
+              </h3>
+
+
+              {current.region?.name && (
+
+                <p className="mt-2 text-sm font-semibold text-emerald-300">
+
+                  📍 {current.region.name}
+
+                </p>
+
+              )}
+
+            </div>
+
+          </div>
+
+        </Link>
+
+
+        {/* Content */}
+
+        <div className="p-6">
+
+
+          <p className="line-clamp-2 leading-7 text-slate-600">
+
+            {current.description ||
+              "Discover an unforgettable Nepal adventure."}
+
+          </p>
+
+
+          <div className="mt-5 flex flex-wrap items-end justify-between gap-4">
+
+
+            {/* Price */}
+
+            {price ? (
+
+              <div>
+
+                <span className="text-xs text-slate-500">
+
+                  {price.label ||
+                    "Price"}
+
+                </span>
+
+
+                <div className="text-2xl font-black text-slate-900">
+
+                  {price.currency}{" "}
+
+                  {price.amount.toLocaleString()}
+
+                  <span className="ml-1 text-sm font-medium text-slate-400">
+
+                    / person
+
+                  </span>
+
+                </div>
+
+              </div>
+
+            ) : (
+
+              <div className="text-sm font-semibold text-slate-500">
+
+                Contact us for pricing
+
+              </div>
+
+            )}
+
+
+            <Link
+              href={detailHref}
+              className="rounded-full bg-slate-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-600"
+            >
+              View Details
+            </Link>
+
           </div>
 
 
+          {/* Controls */}
 
-          {/* Small numbered list */}
+          <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-5">
 
-          <div className="mt-4 grid grid-cols-5 gap-2">
 
+            <button
+              type="button"
+              onClick={
+                previousExperience
+              }
+              aria-label="Previous popular experience"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-lg font-bold text-slate-700 transition hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-600"
+            >
+              ←
+            </button>
+
+
+            <button
+              type="button"
+              onClick={() =>
+                setIsPlaying(
+                  (playing) =>
+                    !playing
+                )
+              }
+              className="rounded-full border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-600"
+            >
+              {isPlaying
+                ? "❚❚ Pause"
+                : "▶ Play"}
+            </button>
+
+
+            <button
+              type="button"
+              onClick={
+                nextExperience
+              }
+              aria-label="Next popular experience"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-lg font-bold text-slate-700 transition hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-600"
+            >
+              →
+            </button>
+
+          </div>
+          {/* Autoplay status */}
+
+          <div className="mt-8 flex items-center gap-3 text-sm text-slate-500">
+
+            <span
+              className={`h-2.5 w-2.5 rounded-full ${isPlaying
+                ? "animate-pulse bg-emerald-500"
+                : "bg-slate-300"
+                }`}
+            />
+
+            {isPlaying
+              ? "Autoplay is on"
+              : "Autoplay is paused"}
+
+          </div>
+
+
+          {/* Dots */}
+
+          <div className="mt-5 flex justify-center gap-2">
 
             {experiences.map(
               (
@@ -1214,13 +1259,12 @@ function PopularExperiences({
                     );
 
                   }}
-                  className={`rounded-xl px-2 py-2 text-center text-xs font-bold transition ${index === currentIndex
-                    ? "bg-emerald-600 text-white shadow-md"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  aria-label={`Show popular experience ${index + 1}`}
+                  className={`h-2.5 rounded-full transition-all ${index === currentIndex
+                    ? "w-8 bg-emerald-500"
+                    : "w-2.5 bg-slate-300 hover:bg-slate-400"
                     }`}
-                >
-                  {index + 1}
-                </button>
+                />
 
               )
             )}
@@ -1228,11 +1272,55 @@ function PopularExperiences({
           </div>
 
 
+        </div>
+
+
+      </div>
+
+
+
+      {/* Small numbered list */}
+
+      <div className="mt-4 grid grid-cols-5 gap-2">
+
+
+        {experiences.map(
+          (
+            experience,
+            index
+          ) => (
+
+            <button
+              key={
+                experience._id
+              }
+              type="button"
+              onClick={() => {
+
+                setCurrentIndex(
+                  index
+                );
+
+              }}
+              className={`rounded-xl px-2 py-2 text-center text-xs font-bold transition ${index === currentIndex
+                ? "bg-emerald-600 text-white shadow-md"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+            >
+              {index + 1}
+            </button>
+
+          )
+        )}
+
+      </div>
 
 
 
 
-  
+
+
+
 
     </section>
 

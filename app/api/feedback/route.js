@@ -268,8 +268,8 @@ export async function GET(request) {
 
     const limit =
       Number.isInteger(requestedLimit) &&
-      requestedLimit > 0 &&
-      requestedLimit <= 100
+        requestedLimit > 0 &&
+        requestedLimit <= 100
         ? requestedLimit
         : 10;
 
@@ -349,17 +349,20 @@ export async function GET(request) {
     */
 
     const feedback = await Feedback.find(filter)
-      .populate(
-        "page",
-        "title slug pageType imageUrl"
-      )
+      .populate({
+        path: "page",
+        select: "title slug pageType imageUrl",
+        populate: {
+          path: "pageType",
+          select: "name slug",
+        },
+      })
       .sort({
         createdAt: -1,
       })
       .skip(skip)
       .limit(limit)
       .lean();
-
     /*
     ==============================================
     RESPONSE

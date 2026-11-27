@@ -133,7 +133,7 @@ export default function AssistantChat() {
               type="text"
               value={message}
               onChange={(event) => setMessage(event.target.value)}
-              placeholder="Ask about treks or tours..."
+              placeholder="Ask about Spa and Wellness..."
               maxLength={2000}
               disabled={isLoading}
               aria-label="Your message"
