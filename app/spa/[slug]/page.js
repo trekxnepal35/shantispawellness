@@ -247,12 +247,12 @@ Array.isArray(page.images)
               Shanti Spa & Wellness
             </p>
 
-            <h1 className="mt-5 text-4xl font-light leading-tight sm:text-5xl lg:text-6xl">
+            {/* <h1 className="mt-5 text-3xl font-light leading-tight sm:text-3xl lg:text-3xl">
               {page.title}
-            </h1>
+            </h1> */}
 
             {page.description && (
-              <p className="mt-6 max-w-4xl text-base leading-8 text-white/80 sm:text-lg">
+              <p className="mt-6  max-w-4xl text-base leading-8 text-white/80 sm:text-lg">
                 {page.description}
               </p>
             )}
@@ -352,9 +352,9 @@ Array.isArray(page.images)
                   >
                     <SectionCollapse title="Overview">
 
-                      <h2 className="text-2xl font-bold text-[#26382f] sm:text-3xl">
+                      {/* <h2 className="text-2xl font-bold text-[#26382f] sm:text-3xl">
                         Discover This Treatment
-                      </h2>
+                      </h2> */}
 
                       <RichTextContent
                         content={page.content}
@@ -374,7 +374,7 @@ Array.isArray(page.images)
                     className="mt-8 rounded-2xl bg-white p-6 shadow-sm sm:p-10"
                   >
                     <h2 className="text-2xl font-bold text-[#26382f]">
-                      Treatment Highlights
+                     Highlights
                     </h2>
 
                     <RichTextContent

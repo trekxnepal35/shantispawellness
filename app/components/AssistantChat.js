@@ -10,7 +10,7 @@ export default function AssistantChat() {
     {
       role: "assistant",
       content:
-        "Namaste! Welcome to Fusion Expeditions. How can I help you plan your Nepal adventure?",
+        "Namaste! Welcome to Shanti Spa & Wellness. How can I help you ?",
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
@@ -77,9 +77,9 @@ export default function AssistantChat() {
         <div className="mb-4 flex h-[min(600px,75vh)] w-[min(360px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
           <div className="flex items-center justify-between bg-emerald-700 px-4 py-4 text-white">
             <div>
-              <h2 className="font-bold">Fusion Expeditions</h2>
+              <h2 className="font-bold">Shanti Spa & Wellness</h2>
               <p className="text-xs text-emerald-100">
-                Trek & Travel Assistant
+                Spa & Wellness Assistant
               </p>
             </div>
 

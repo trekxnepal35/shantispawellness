@@ -153,7 +153,7 @@ export default async function SpaPage() {
           SPA COLLECTION
       ========================================= */}
 
-      <section className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+      <section className="mx-auto max-w-full px-6 py-16 lg:px-8">
 
         {/* SECTION INTRODUCTION */}
 
@@ -208,7 +208,7 @@ export default async function SpaPage() {
 
           /* SPA CARDS */
 
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-6">
 
             {pages.map((page) => (
 
@@ -271,7 +271,7 @@ export default async function SpaPage() {
 
                   {/* HIGHLIGHTS */}
 
-                  {page.highlight && (
+                  {/* {page.highlight && (
 
                     <div className="mt-3">
 
@@ -282,7 +282,7 @@ export default async function SpaPage() {
 
                     </div>
 
-                  )}
+                  )} */}
 
 
                   {/* DESCRIPTION */}

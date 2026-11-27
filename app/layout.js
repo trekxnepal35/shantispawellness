@@ -326,7 +326,7 @@ export default async function RootLayout({
 
                   {/* Instagram */}
                   <Link
-                    href="https://www.instagram.com/shantispa_and_wellness"
+                    href="https://www.instagram.com/shanti_spa_wellness"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-pink-600 text-2xl hover:scale-110 transition-transform"

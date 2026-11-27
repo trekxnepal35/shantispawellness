@@ -239,7 +239,7 @@ export default function HomePage() {
             <div className="max-w-3xl text-white">
 
               <span className="inline-flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.3em] text-[#d9c49b]">
-                <span className="h-px w-10 bg-[#d9c49b]" />
+                <span className="h-px w-10 bg-[#d9c49b] "  />
                 Shanti Spa & Wellness
               </span>
 
@@ -354,7 +354,7 @@ export default function HomePage() {
         id="experiences"
         className="bg-[#f0ede5] px-6 py-24 lg:px-8"
       >
-        <div className="mx-auto max-w-7xl">
+        <div className="mx-auto max-w-full">
 
           <SectionHeading
             eyebrow="Explore Shanti"
@@ -463,7 +463,7 @@ export default function HomePage() {
             </div>
           )}
 
-          {wellnessPages.length > 6 && (
+          {wellnessPages.length > 3 && (
             <div className="mt-12 text-center">
               <Link
                 href="/wellness"
@@ -481,7 +481,7 @@ export default function HomePage() {
         id="spa"
         className="bg-[#faf8f3] px-6 py-24 lg:px-8"
       >
-        <div className="mx-auto max-w-7xl">
+        <div className="mx-auto max-w-full">
 
           <SectionHeading
             eyebrow="The Art of Relaxation"
@@ -585,7 +585,7 @@ export default function HomePage() {
             </div>
           )}
 
-          {spaPages.length > 6 && (
+          {spaPages.length > 3 && (
             <div className="mt-12 text-center">
               <Link
                 href="/spa"

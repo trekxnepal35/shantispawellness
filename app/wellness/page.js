@@ -90,7 +90,7 @@ export default async function WellnessPage() {
                 </div>
             </section>
 
-            <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+            <section className="mx-auto max-w-full px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
                 {pages.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-14 text-center">
                         <h2 className="text-xl font-semibold text-gray-900">
@@ -102,7 +102,7 @@ export default async function WellnessPage() {
                         </p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-5">
                         {pages.map((page) => (
                             <article
                                 key={page._id}
@@ -137,14 +137,14 @@ export default async function WellnessPage() {
                                         </Link>
                                     </h2>
 
-                                    {page.highlight && (
+                                    {/* {page.highlight && (
                                         <div className="mt-3">
                                             <RichTextContent
                                                 content={page.highlight}
                                                 className="prose prose-sm max-w-none prose-p:leading-6 prose-p:text-emerald-700 prose-headings:font-bold prose-headings:text-emerald-800 prose-a:text-blue-600 prose-a:hover:underline"
                                             />
                                         </div>
-                                    )}
+                                    )} */}
 
                                     {page.description && (
                                         <div className="mt-4 line-clamp-3 text-sm leading-6 text-gray-600">
